@@ -6,7 +6,25 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 //==============================================================================
-class AudioPluginAudioProcessor final : public juce::AudioProcessor
+class APF{
+    public:
+    APF(){
+        std::fill(std::begin(b),std::end(b),0.0f);
+        std::fill(std::begin(b2),std::end(b2),0.0f);
+    };
+    inline float process(float in, float c, int x){
+        uint_fast16_t N = (n-x)&1023;
+        b2[n] = (in*-c)+b[N]+(b2[N]*c);
+        b[n]=in;
+        return b2[n];
+        n = (n+1)&1023;
+    };
+    private:
+    float b[1024];
+    float b2[1024];
+    uint_fast16_t n =0;
+};
+class AudioPluginAudioProcessor : public juce::AudioProcessor
 {
 public:
     //==============================================================================
@@ -47,45 +65,27 @@ public:
 
     inline void Hadamard16 (float* Hadamard);
 
-    float filter[32];
-    float filter2[24];
-    float LFO1=0.0f;
-    float LFO2=0.0f;
-    float LFO3=0.0f;
-    float LFO4=0.0f;
-    int combindx =0;
-    int apfindx =0;
+    uint_fast16_t combindx =0;
 
-    float combL[4096];
-    float combR[4096];
-    float combL2[4096];
-    float combR2[4096];
-    float combL3[4096];
-    float combR3[4096];
-    float combL4[4096];
-    float combR4[4096];
-    float combL5[4096];
-    float combR5[4096];
-    float combL6[4096];
-    float combR6[4096];
-    float combL7[4096];
-    float combR7[4096];
-    float combL8[4096];
-    float combR8[4096];
+    APF APFF[2][6];
 
-    float allpasL[1024];
-    float allpasR[1024];
-    float allpasL2[1024];
-    float allpasR2[1024];
-    float allpasL3[1024];
-    float allpasR3[1024];
-    float allpasL4[1024];
-    float allpasR4[1024];
-    float allpasL5[1024];
-    float allpasR5[1024];
-    float allpasL6[1024];
-    float allpasR6[1024];
-    
+    float COMBL[8][4096];
+    float COMBR[8][4096];
+
+    float COMBLP[16];
+    float COMPHPA[16];
+    float COMPHPB[16];
+
+    static inline constexpr int combindex[2][8]{
+		{1109, 1229, 1321, 1487, 1559, 2333, 1871, 2593},
+		{1117, 1217, 1531, 1621, 2221, 1699, 2467, 2017}
+	};
+
+	static inline constexpr int apfindex[2][6]{
+		{233, 331, 457, 521, 673, 773},
+		{241, 349, 463, 541, 661, 797}
+	};
+
     static inline const int ReverbLFO[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, -1, -2, -3, -4, -5, -6, -7, -8, -8, -7, -6, -5, -4, -3, -2, -1, 0};
     
     std::atomic<float>* P0s = nullptr;
